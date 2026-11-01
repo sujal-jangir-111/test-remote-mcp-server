@@ -1,7 +1,11 @@
 from fastmcp import FastMCP
 import os
 import aiosqlite  # Changed: sqlite3 → aiosqlite
-DB_PATH = os.path.join(os.path.dirname(__file__), "expenses.db")
+import shutil
+import tempfile
+# The deployed app folder is not writable, so run from a copy in the temp directory
+BUNDLED_DB_PATH = os.path.join(os.path.dirname(__file__), "expenses.db")
+DB_PATH = os.path.join(tempfile.gettempdir(), "expense_tracker.db")
 CATEGORIES_PATH = os.path.join(os.path.dirname(__file__), "categories.json")
 
 print(f"Database path: {DB_PATH}")
@@ -10,6 +14,9 @@ mcp = FastMCP("ExpenseTracker")
 
 def init_db():  # Keep as sync for initialization
     try:
+        # Start from the bundled dummy data on first run
+        if not os.path.exists(DB_PATH) and os.path.exists(BUNDLED_DB_PATH):
+            shutil.copyfile(BUNDLED_DB_PATH, DB_PATH)
         # Use synchronous sqlite3 just for initialization
         import sqlite3
         with sqlite3.connect(DB_PATH) as c:
